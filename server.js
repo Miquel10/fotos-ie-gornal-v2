@@ -86,6 +86,6 @@ app.post('/upload', upload.array('photos'), async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Servidor actiu a http://localhost:${PORT}`);
 });
