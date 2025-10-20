@@ -67,7 +67,7 @@ app.post('/upload', upload.array('photos'), async (req, res) => {
     for (const file of req.files) {
       await drive.files.create({
         requestBody: {
-          name: file.originalname,
+          name: `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`,
           parents: [folderId]
         },
         media: {
