@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Puja fotos - Escola</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 20px;
+      color: #2d3748;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #4a5568;
+      margin-bottom: 25px;
+      font-weight: 600;
+    }
+    select {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    .dropzone {
+      width: 100%;
+      height: 180px;
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      color: #4a5568;
+      font-size: 18px;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .dropzone:hover {
+      background: #edf2f7;
+      border-color: #a0aec0;
+    }
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-upload {
+      background: #4299e1;
+      color: white;
+    }
+    .btn-upload:hover {
+      background: #3182ce;
+    }
+    .btn-camera {
+      background: #68d391;
+      color: white;
+    }
+    .btn-camera:hover {
+      background: #48bb78;
+    }
+    #status {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 18px;
+      min-height: 24px;
+    }
+    .success { color: #38a169; }
+    .error { color: #e53e3e; }
+    .info { color: #dd6b20; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📸 Puja fotos de l'IE GORNAL al teu curs</h2> 
+
+    <select id="course">
+      <option value="">-- Tria el teu curs --</option>
+      <option value="Infantil 3">Infantil 3</option>
+      <option value="Infantil 4">Infantil 4</option>
+      <option value="Infantil 5">Infantil 5</option>
+      <option value="1r Primària">1r Primària</option>
+      <option value="2n Primària">2n Primària</option>
+      <option value="3r Primària">3r Primària</option>
+      <option value="4t Primària">4t Primària</option>
+      <option value="5è Primària">5è Primària</option>
+      <option value="6è Primària">6è Primària</option>
+      <option value="1r ESO">1r ESO</option>
+      <option value="2n ESO">2n ESO</option>
+      <option value="3r ESO">3r ESO</option>
+      <option value="4t ESO">4t ESO</option>
+    </select>
+
+    <div class="dropzone" id="dropzone">
+      <p>Arrossega les fotos aquí</p>
+      <p style="font-size:14px; color:#718096; margin-top:8px;">o fes clic per seleccionar fitxers</p>
+    </div>
+
+    <div class="buttons">
+      <button class="btn btn-upload" id="selectFiles">Seleccionar fitxers</button>
+      <button class="btn btn-camera" id="takePhoto">📷 Fer una foto</button>
+    </div>
+
+    <div id="status"></div>
+
+    <!-- Input amagat per càmera i fitxers -->
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+
+    <script>
+      const dropzone = document.getElementById('dropzone');
+      const courseSelect = document.getElementById('course');
+      const status = document.getElementById('status');
+      const fileInput = document.getElementById('fileInput');
+      const cameraInput = document.getElementById('cameraInput');
+      const selectFilesBtn = document.getElementById('selectFiles');
+      const takePhotoBtn = document.getElementById('takePhoto');
+
+      // Funció per pujar fitxers
+      const uploadFiles = (files) => {
+        const course = courseSelect.value;
+        if (!course) {
+          status.innerHTML = '<span class="error">⚠️ Tria un curs abans de pujar fotos.</span>';
+          return;
+        }
+        if (files.length === 0) return;
+
+        const formData = new FormData();
+        formData.append('course', course);
+        for (let file of files) {
+          formData.append('photos', file);
+        }
+
+        status.innerHTML = '<span class="info">⏳ Pujant...</span>';
+        fetch('/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            status.innerHTML = '<span class="success">✅ Fotos pujades correctament!</span>';
+            dropzone.innerHTML = '<p>Pots pujar més fotos!</p>';
+          } else {
+            status.innerHTML = `<span class="error">❌ Error: ${data.error || 'No s’ha pogut pujar.'}</span>`;
+          }
+        })
+        .catch(err => {
+          status.innerHTML = '<span class="error">⚠️ No s’ha pogut connectar al servidor.</span>';
+          console.error(err);
+        });
+      };
+
+      // Arrossegar i deixar anar
+      dropzone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropzone.style.backgroundColor = '#edf2f7';
+        dropzone.style.borderColor = '#a0aec0';
+      });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.style.backgroundColor = '#f8fafc';
+        dropzone.style.borderColor = '#cbd5e0';
+      });
+      dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.style.backgroundColor = '#f8fafc';
+        dropzone.style.borderColor = '#cbd5e0';
+        uploadFiles(e.dataTransfer.files);
+      });
+
+      // Clic al requadre
+      dropzone.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      // Botó "Seleccionar fitxers"
+      selectFilesBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      // Botó "Fer una foto"
+      takePhotoBtn.addEventListener('click', () => {
+        cameraInput.click();
+      });
+
+      // Quan es seleccionen fitxers
+      fileInput.addEventListener('change', () => {
+        uploadFiles(fileInput.files);
+        fileInput.value = ''; // Permet seleccionar els mateixos fitxers de nou
+      });
+
+      // Quan es fa una foto
+      cameraInput.addEventListener('change', () => {
+        uploadFiles(cameraInput.files);
+        cameraInput.value = '';
+      });
+    </script>
+  </div>
+</body>
+</html>
